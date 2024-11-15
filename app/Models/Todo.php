@@ -14,6 +14,10 @@ class Todo extends Model
 
     protected $guarded = [];
 
+    protected $attributes = [
+        'completed' => false
+    ];
+
     /**
      * Get the attributes that should be cast.
      * 
