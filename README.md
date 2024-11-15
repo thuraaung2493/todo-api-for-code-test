@@ -139,3 +139,16 @@ Enable the configuration:
 ```bash
   php artisan test
 ```
+
+## Local Development
+
+```bash
+  git clone <repo> todo-api
+  cd todo-api
+
+  composer install
+  cp .env.example .env
+  php artisan key:generate
+  php artisan migrate
+  php artisan serve
+```

@@ -9,7 +9,6 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class TodoService
 {
-
     public function getAll(): AnonymousResourceCollection
     {
         $data = Todo::query()
