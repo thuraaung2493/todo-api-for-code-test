@@ -18,7 +18,7 @@ class TodoService
                     ->orWhere('description', 'like', '%' . request('search') . '%');
             })
             ->when(request()->has('completed'), function (Builder $query) {
-                $query->where('completed', request('completed'));
+                $query->where('completed', request('completed') === 'true');
             })
             ->when(request()->has('sort_by'), function (Builder $query) {
                 $query->orderBy(request('sort_by'), request('sort_order') ?? 'asc');

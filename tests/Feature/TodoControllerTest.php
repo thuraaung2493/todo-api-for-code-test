@@ -84,7 +84,7 @@ describe('TodoController::index', function () {
         Todo::factory(10)->create(['completed' => false]);
         Todo::factory(5)->create(['completed' => true]);
 
-        getJson(route('todos.index', ['completed' => true]))
+        getJson(route('todos.index', ['completed' => "true"]))
             ->assertStatus(200)
             ->assertJson(
                 fn(AssertableJson $json) => $json
@@ -94,7 +94,7 @@ describe('TodoController::index', function () {
                     ->where('status', 200)
             );
 
-        getJson(route('todos.index', ['completed' => false]))
+        getJson(route('todos.index', ['completed' => "false"]))
             ->assertStatus(200)
             ->assertJson(
                 fn(AssertableJson $json) => $json
