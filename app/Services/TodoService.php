@@ -29,9 +29,9 @@ class TodoService
         return TodoResource::collection($data);
     }
 
-    public function getDetails(string $id)
+    public function getDetails(Todo $todo)
     {
-        // 
+        return TodoResource::make($todo);
     }
 
     public function create(array $data)
@@ -41,9 +41,11 @@ class TodoService
         return TodoResource::make($todo);
     }
 
-    public function update(string $id, array $data)
+    public function update(Todo $todo, array $newData)
     {
-        //
+        $todo->update($newData);
+
+        return TodoResource::make($todo->refresh());
     }
 
     public function delete(string $id)

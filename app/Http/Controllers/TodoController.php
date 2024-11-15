@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\CreateTodoRequest;
+use App\Http\Requests\UpdateTodoRequest;
 use App\Http\Responses\CollectionResponse;
 use App\Models\Todo;
 use App\Services\ApiResponse;
@@ -51,15 +52,27 @@ class TodoController extends Controller
      */
     public function show(Todo $todo)
     {
-        //
+        return $this->apiResponse->resourceResponse(
+            data: $this->todoService->getDetails($todo),
+            message: 'Retrieved todo details',
+        );
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Todo $todo)
+    public function update(UpdateTodoRequest $request, Todo $todo)
     {
-        //
+        try {
+            return $this->apiResponse->resourceResponse(
+                data: $this->todoService->update($todo, $request->validated()),
+                message: 'Todo updated successfully',
+            );
+        } catch (\Throwable $th) {
+            Log::error('Failed to update todo: ' . $th->getMessage());
+
+            return $this->apiResponse->error('Failed to update todo');
+        }
     }
 
     /**

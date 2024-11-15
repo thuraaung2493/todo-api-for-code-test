@@ -1,13 +1,17 @@
 <?php
 
 use App\Models\Todo;
+use App\Services\TodoService;
+use Illuminate\Support\Str;
 use Illuminate\Support\Collection;
 use Illuminate\Testing\Fluent\AssertableJson;
 
-use function Pest\Laravel\assertDatabaseCount;
-use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Laravel\getJson;
 use function Pest\Laravel\postJson;
+use function Pest\Laravel\assertDatabaseHas;
+use function Pest\Laravel\assertDatabaseCount;
+use function Pest\Laravel\mock;
+use function Pest\Laravel\putJson;
 
 describe('TodoControllerTest::index', function () {
     it('should return a list of todos with pagination', function () {
@@ -312,5 +316,181 @@ describe('TodoControllerTest::store', function () {
             ->assertInvalid(['title']);
 
         assertDatabaseCount('todos', 0);
+    });
+
+    it('should return 500 if todo creation fails', function () {
+        $todo = Todo::factory()->make();
+
+        mock(TodoService::class)
+            ->shouldReceive('create')
+            ->andThrow(new Exception('Error creating todo'));
+
+        postJson(
+            uri: route('todos.index'),
+            data: [
+                'title' => $todo->title,
+                'description' => $todo->description,
+            ]
+        )
+            ->assertStatus(500)
+            ->assertJson(
+                fn(AssertableJson $json) => $json
+                    ->hasAll(['data', 'message', 'status'])
+                    ->where('data', null)
+                    ->where('message', 'Failed to create todo')
+                    ->where('status', 500)
+            );
+
+        assertDatabaseCount('todos', 0);
+    });
+});
+
+describe('TodoControllerTest::show', function () {
+    it('should retrieve todo by id', function () {
+        $todo = Todo::factory()->create();
+
+        getJson(route('todos.show', ['todo' => $todo->id]))
+            ->assertStatus(200)
+            ->assertJson(
+                fn(AssertableJson $json) => $json
+                    ->hasAll(['data', 'message', 'status'])
+                    ->where('data.id', $todo->id)
+                    ->where('data.title', $todo->title)
+                    ->where('data.description', $todo->description)
+                    ->where('data.completed', $todo->completed)
+                    ->where('message', 'Retrieved todo details')
+                    ->where('status', 200)
+            );
+    });
+
+    it('should return 404 if todo not found', function () {
+        getJson(route('todos.show', ['todo' => Str::uuid()->toString()]))
+            ->assertStatus(404)
+            ->assertJson(
+                fn(AssertableJson $json) => $json
+                    ->hasAll(['data', 'message', 'status'])
+                    ->where('data', null)
+                    ->where('message', 'Resource not found')
+                    ->where('status', 404)
+            );
+    });
+});
+
+describe('TodoControllerTest::update', function () {
+    it('should update todo with new title', function () {
+        $todo = Todo::factory()->create();
+        $newTitle = 'New Todo';
+
+        putJson(
+            uri: route('todos.update', ['todo' => $todo->id]),
+            data: [
+                'title' => $newTitle,
+            ]
+        )
+            ->assertStatus(200)
+            ->assertJson(
+                fn(AssertableJson $json) => $json
+                    ->hasAll(['data', 'message', 'status'])
+                    ->where('data.title', $newTitle)
+                    ->where('data.description', $todo->description)
+                    ->where('data.completed', $todo->completed)
+                    ->where('message', 'Todo updated successfully')
+                    ->where('status', 200)
+            );
+
+        assertDatabaseCount('todos', 1);
+        assertDatabaseHas('todos', [
+            'title' => $newTitle,
+            'description' => $todo->description,
+            'completed' => $todo->completed,
+        ]);
+    });
+
+    it('should update todo with new description', function () {
+        $todo = Todo::factory()->create();
+        $newDescription = 'New Description';
+
+        putJson(
+            uri: route('todos.update', ['todo' => $todo->id]),
+            data: [
+                'description' => $newDescription,
+            ]
+        )
+            ->assertStatus(200)
+            ->assertJson(
+                fn(AssertableJson $json) => $json
+                    ->hasAll(['data', 'message', 'status'])
+                    ->where('data.title', $todo->title)
+                    ->where('data.description', $newDescription)
+                    ->where('data.completed', $todo->completed)
+                    ->where('message', 'Todo updated successfully')
+                    ->where('status', 200)
+            );
+
+        assertDatabaseCount('todos', 1);
+        assertDatabaseHas('todos', [
+            'title' => $todo->title,
+            'description' => $newDescription,
+            'completed' => $todo->completed,
+        ]);
+    });
+
+    it('should update todo with new status', function () {
+        $todo = Todo::factory()->create();
+        $newStatus = true;  // completed
+
+        putJson(
+            uri: route('todos.update', ['todo' => $todo->id]),
+            data: [
+                'completed' => $newStatus,
+            ]
+        )
+            ->assertStatus(200)
+            ->assertJson(
+                fn(AssertableJson $json) => $json
+                    ->hasAll(['data', 'message', 'status'])
+                    ->where('data.title', $todo->title)
+                    ->where('data.description', $todo->description)
+                    ->where('data.completed', $newStatus)
+                    ->where('message', 'Todo updated successfully')
+                    ->where('status', 200)
+            );
+
+        assertDatabaseCount('todos', 1);
+        assertDatabaseHas('todos', [
+            'title' => $todo->title,
+            'description' => $todo->description,
+            'completed' => $newStatus,
+        ]);
+    });
+
+    it('should return 404 if todo not found', function () {
+        putJson(route('todos.update', ['todo' => Str::uuid()->toString()]))
+            ->assertStatus(404)
+            ->assertJson(
+                fn(AssertableJson $json) => $json
+                    ->hasAll(['data', 'message', 'status'])
+                    ->where('data', null)
+                    ->where('message', 'Resource not found')
+                    ->where('status', 404)
+            );
+    });
+
+    it('should return 500 if todo update fails', function () {
+        $todo = Todo::factory()->create();
+
+        mock(TodoService::class)
+            ->shouldReceive('update')
+            ->andThrow(new Exception('Error updating todo'));
+
+        putJson(route('todos.update', ['todo' => $todo->id]))
+            ->assertStatus(500)
+            ->assertJson(
+                fn(AssertableJson $json) => $json
+                    ->hasAll(['data', 'message', 'status'])
+                    ->where('data', null)
+                    ->where('message', 'Failed to update todo')
+                    ->where('status', 500)
+            );
     });
 });
