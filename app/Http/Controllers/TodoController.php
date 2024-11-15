@@ -21,7 +21,7 @@ class TodoController extends Controller
      */
     public function index()
     {
-        return $this->apiResponse->resourceResponse(
+        return $this->apiResponse->success(
             data: $this->todoService->getAll(),
             message: 'Retrived all todos',
         );
@@ -33,7 +33,7 @@ class TodoController extends Controller
     public function store(CreateTodoRequest $request)
     {
         try {
-            return $this->apiResponse->resourceResponse(
+            return $this->apiResponse->success(
                 data: $this->todoService->create($request->validated()),
                 message: 'Todo created successfully',
                 status: 201
@@ -50,7 +50,7 @@ class TodoController extends Controller
      */
     public function show(Todo $todo)
     {
-        return $this->apiResponse->resourceResponse(
+        return $this->apiResponse->success(
             data: $this->todoService->getDetails($todo),
             message: 'Retrieved todo details',
         );
@@ -62,7 +62,7 @@ class TodoController extends Controller
     public function update(UpdateTodoRequest $request, Todo $todo)
     {
         try {
-            return $this->apiResponse->resourceResponse(
+            return $this->apiResponse->success(
                 data: $this->todoService->update($todo, $request->validated()),
                 message: 'Todo updated successfully',
             );
@@ -81,7 +81,7 @@ class TodoController extends Controller
         try {
             $this->todoService->delete($todo);
 
-            return $this->apiResponse->success(
+            return $this->apiResponse->message(
                 message: 'Todo deleted successfully',
             );
         } catch (\Throwable $th) {
