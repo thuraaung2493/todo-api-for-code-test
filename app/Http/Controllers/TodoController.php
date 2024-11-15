@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Responses\CollectionResponse;
 use App\Models\Todo;
 use App\Services\ApiResponse;
+use App\Services\TodoService;
 use Illuminate\Http\Request;
 
 class TodoController extends Controller
@@ -18,7 +20,10 @@ class TodoController extends Controller
      */
     public function index()
     {
-        //
+        return $this->apiResponse->resourceResponse(
+            data: $this->todoService->getAll(),
+            message: 'Retrived all todos',
+        );
     }
 
     /**
