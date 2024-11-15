@@ -36,7 +36,9 @@ class TodoService
 
     public function create(array $data)
     {
-        // 
+        $todo = Todo::query()->create($data);
+
+        return TodoResource::make($todo);
     }
 
     public function update(string $id, array $data)

@@ -4,7 +4,10 @@ use App\Models\Todo;
 use Illuminate\Support\Collection;
 use Illuminate\Testing\Fluent\AssertableJson;
 
+use function Pest\Laravel\assertDatabaseCount;
+use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Laravel\getJson;
+use function Pest\Laravel\postJson;
 
 describe('TodoControllerTest::index', function () {
     it('should return a list of todos with pagination', function () {
@@ -235,5 +238,79 @@ describe('TodoControllerTest::index', function () {
                     ->where('message', 'Retrived all todos')
                     ->where('status', 200)
             );
+    });
+});
+
+describe('TodoControllerTest::store', function () {
+    it('should create todo', function () {
+        $todo = Todo::factory()->make();
+
+        postJson(
+            uri: route('todos.index'),
+            data: [
+                'title' => $todo->title,
+                'description' => $todo->description,
+            ]
+        )
+            ->assertStatus(201)
+            ->assertJson(
+                fn(AssertableJson $json) => $json
+                    ->hasAll(['data', 'message', 'status'])
+                    ->where('data.title', $todo->title)
+                    ->where('data.description', $todo->description)
+                    ->where('data.completed', false)
+                    ->where('message', 'Todo created successfully')
+                    ->where('status', 201)
+            );
+
+        assertDatabaseCount('todos', 1);
+        assertDatabaseHas('todos', [
+            'title' => $todo->title,
+            'description' => $todo->description,
+            'completed' => false,
+        ]);
+    });
+
+    it('should create todo without description', function () {
+        $title = 'Test Todo';
+
+        postJson(
+            uri: route('todos.index'),
+            data: [
+                'title' => $title
+            ]
+        )
+            ->assertStatus(201)
+            ->assertJson(
+                fn(AssertableJson $json) => $json
+                    ->hasAll(['data', 'message', 'status'])
+                    ->where('data.title', $title)
+                    ->where('data.description', null)
+                    ->where('data.completed', false)
+                    ->where('message', 'Todo created successfully')
+                    ->where('status', 201)
+            );
+
+        assertDatabaseCount('todos', 1);
+        assertDatabaseHas('todos', [
+            'title' => $title,
+            'description' => null,
+            'completed' => false,
+        ]);
+    });
+
+    it('cannot create todo without title', function () {
+        $todo = Todo::factory()->make();
+
+        postJson(
+            uri: route('todos.index'),
+            data: [
+                'description' => $todo->description,
+            ]
+        )
+            ->assertStatus(422)
+            ->assertInvalid(['title']);
+
+        assertDatabaseCount('todos', 0);
     });
 });
