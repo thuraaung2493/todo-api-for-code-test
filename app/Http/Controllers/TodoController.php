@@ -4,11 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\CreateTodoRequest;
 use App\Http\Requests\UpdateTodoRequest;
-use App\Http\Responses\CollectionResponse;
 use App\Models\Todo;
 use App\Services\ApiResponse;
 use App\Services\TodoService;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class TodoController extends Controller
@@ -80,6 +78,16 @@ class TodoController extends Controller
      */
     public function destroy(Todo $todo)
     {
-        //
+        try {
+            $this->todoService->delete($todo);
+
+            return $this->apiResponse->success(
+                message: 'Todo deleted successfully',
+            );
+        } catch (\Throwable $th) {
+            Log::error('Failed to delete todo: ' . $th->getMessage());
+
+            return $this->apiResponse->error('Failed to delete todo');
+        }
     }
 }

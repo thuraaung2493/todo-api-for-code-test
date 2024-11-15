@@ -10,10 +10,11 @@ use function Pest\Laravel\getJson;
 use function Pest\Laravel\postJson;
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Laravel\assertDatabaseCount;
+use function Pest\Laravel\deleteJson;
 use function Pest\Laravel\mock;
 use function Pest\Laravel\putJson;
 
-describe('TodoControllerTest::index', function () {
+describe('TodoController::index', function () {
     it('should return a list of todos with pagination', function () {
         Todo::factory(20)->create();
 
@@ -245,7 +246,7 @@ describe('TodoControllerTest::index', function () {
     });
 });
 
-describe('TodoControllerTest::store', function () {
+describe('TodoController::store', function () {
     it('should create todo', function () {
         $todo = Todo::factory()->make();
 
@@ -345,7 +346,7 @@ describe('TodoControllerTest::store', function () {
     });
 });
 
-describe('TodoControllerTest::show', function () {
+describe('TodoController::show', function () {
     it('should retrieve todo by id', function () {
         $todo = Todo::factory()->create();
 
@@ -376,7 +377,7 @@ describe('TodoControllerTest::show', function () {
     });
 });
 
-describe('TodoControllerTest::update', function () {
+describe('TodoController::update', function () {
     it('should update todo with new title', function () {
         $todo = Todo::factory()->create();
         $newTitle = 'New Todo';
@@ -492,5 +493,55 @@ describe('TodoControllerTest::update', function () {
                     ->where('message', 'Failed to update todo')
                     ->where('status', 500)
             );
+    });
+});
+
+describe('TodoController::destroy', function () {
+    it('should delete todo', function () {
+        $todo = Todo::factory()->create();
+
+        deleteJson(route('todos.destroy', ['todo' => $todo->id]))
+            ->assertStatus(200)
+            ->assertJson(
+                fn(AssertableJson $json) => $json
+                    ->hasAll(['data', 'message', 'status'])
+                    ->where('data', null)
+                    ->where('message', 'Todo deleted successfully')
+                    ->where('status', 200)
+            );
+
+        assertDatabaseCount('todos', 0);
+    });
+
+    it('should return 404 if todo not found', function () {
+        deleteJson(route('todos.destroy', ['todo' => Str::uuid()->toString()]))
+            ->assertStatus(404)
+            ->assertJson(
+                fn(AssertableJson $json) => $json
+                    ->hasAll(['data', 'message', 'status'])
+                    ->where('data', null)
+                    ->where('message', 'Resource not found')
+                    ->where('status', 404)
+            );
+    });
+
+    it('should return 500 if todo delete fails', function () {
+        $todo = Todo::factory()->create();
+
+        mock(TodoService::class)
+            ->shouldReceive('delete')
+            ->andThrow(new Exception('Error deleting todo'));
+
+        deleteJson(route('todos.destroy', ['todo' => $todo->id]))
+            ->assertStatus(500)
+            ->assertJson(
+                fn(AssertableJson $json) => $json
+                    ->hasAll(['data', 'message', 'status'])
+                    ->where('data', null)
+                    ->where('message', 'Failed to delete todo')
+                    ->where('status', 500)
+            );
+
+        assertDatabaseCount('todos', 1);
     });
 });

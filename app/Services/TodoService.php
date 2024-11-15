@@ -5,13 +5,12 @@ namespace App\Services;
 use App\Http\Resources\TodoResource;
 use App\Models\Todo;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\PaginatedResourceResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class TodoService
 {
 
-    public function getAll()
+    public function getAll(): AnonymousResourceCollection
     {
         $data = Todo::query()
             ->when(request()->has('search'), function (Builder $query) {
@@ -29,27 +28,27 @@ class TodoService
         return TodoResource::collection($data);
     }
 
-    public function getDetails(Todo $todo)
+    public function getDetails(Todo $todo): TodoResource
     {
         return TodoResource::make($todo);
     }
 
-    public function create(array $data)
+    public function create(array $data): TodoResource
     {
         $todo = Todo::query()->create($data);
 
         return TodoResource::make($todo);
     }
 
-    public function update(Todo $todo, array $newData)
+    public function update(Todo $todo, array $newData): TodoResource
     {
         $todo->update($newData);
 
         return TodoResource::make($todo->refresh());
     }
 
-    public function delete(string $id)
+    public function delete(Todo $todo): void
     {
-        //
+        $todo->delete();
     }
 }

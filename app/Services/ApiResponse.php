@@ -16,7 +16,7 @@ class ApiResponse
     private string $message;
     private int $status;
 
-    public function success(array $data, $message = 'Success', $status = 200): JsonResponse
+    public function success(array|null $data = null, $message = 'Success', $status = 200): JsonResponse
     {
         $this->data = $data;
         $this->message = $message;
